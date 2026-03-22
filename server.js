@@ -3,6 +3,7 @@ const app = express();
 
 app.use(express.json());
 
+// 🔑 STORE YOUR KEYS HERE
 let keys = {
     "TEST-123": {
         hwid: null,
@@ -10,28 +11,23 @@ let keys = {
     }
 };
 
-// VERIFY ENDPOINT
+// ✅ VERIFY KEY
 app.get("/verify", (req, res) => {
     const { key, hwid } = req.query;
 
-    if (!keys[key]) {
-        return res.send("INVALID");
-    }
+    if (!keys[key]) return res.send("INVALID");
 
     const data = keys[key];
 
-    // Expiry check
     if (Date.now() > data.expires) {
         return res.send("EXPIRED");
     }
 
-    // First time binding
     if (!data.hwid) {
         data.hwid = hwid;
         return res.send("BOUND");
     }
 
-    // HWID mismatch
     if (data.hwid !== hwid) {
         return res.send("HWID_MISMATCH");
     }
@@ -39,14 +35,18 @@ app.get("/verify", (req, res) => {
     return res.send("VALID");
 });
 
-// SCRIPT ENDPOINT
+// 📦 SCRIPT (LOCKED)
 app.get("/script", (req, res) => {
+    const { key, hwid } = req.query;
+
+    if (!keys[key]) return res.send("NO");
+    if (keys[key].hwid !== hwid) return res.send("NO");
+
     res.send(`
-        print("Script Loaded Successfully")
-        -- your actual script here
+        print("Secure Script Loaded")
     `);
 });
 
 app.listen(3000, () => {
-    console.log("Server running on port 3000");
+    console.log("Server running");
 });
